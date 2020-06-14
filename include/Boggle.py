@@ -31,7 +31,7 @@ class Boggle(db.Model):
     get_correct_answer()
 
     make_board()
-
+        Returns a 4x4 wordlist in str form
     json()
         Returns the Boggle object in JSON form
     """
@@ -64,18 +64,18 @@ class Boggle(db.Model):
         self.user_answer = user_answer
         self.board = self.board
         if self.board == None:
-            self.board = self.make_board()
+            self.board = self.makeBoard()
 
         self.correct_answer = correct_answer
         if self.correct_answer == None:
-            self.correct_answer = self.get_correct_answer()
+            self.correct_answer = self.getCorrectAnswer()
 
-    def get_correct_answer(self): 
-        #TODO: Write function to create Trie and traverse the board using DFS to determine all correct answers
+    def getCorrectAnswer(self): 
+        #TODO: Write function to create Trie and helper function to traverse the board using DFS to determine all correct answers
         return ""
 
 
-    def make_board(self): 
+    def makeBoard(self): 
         """
         Returns a 4x4 board
         """
@@ -89,12 +89,32 @@ class Boggle(db.Model):
         """
         return {"gID": self.gID, "user_score":self.user_score,"board":self.board,"user_answer": self.user_answer, "correct_answer":self.correct_answer}
 
-'''
-App routes to retrieve different Boggle information
-'''
+"""
+App routes to manipulate Boggle game information via CRUD
+"""
+
 @app.route("/games")
-def get_all_games():
+def getAllGames():
     return jsonify({"Boggle": [boggle.json() for boggle in Boggle.query.all()]})
 
-if __name__ == '__main__': #this allows us to run flask app without explicitly using python -m flask run. Can just run python filename.py in terminal
+@app.route("/games/<int:gID>")
+def getGame(gID):
+    curr_game = Boggle.query.filter_by(gID=gID).first()
+    if curr_game:
+        return jsonify(curr_game.json())
+    return jsonify({"message": "Game not found."}), 404
+
+@app.route("/games", methods=['POST'])
+def createGame():
+    data = request.get_json()
+    boggle = Boggle(**data)
+    try:
+        db.session.add(boggle)
+        db.session.commit()
+    except:
+        return jsonify({"message": "An error occurred creating the game."}), 500
+
+    return jsonify(boggle.json()), 201
+
+if __name__ == '__main__': #this allows us to run flask app without explicitly using python -m flask run. Can just run python filename.py in terminal.
     app.run(host='0.0.0.0',port=7000, debug=True)
