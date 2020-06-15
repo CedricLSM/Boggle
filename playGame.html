@@ -9,13 +9,44 @@
     <link rel="stylesheet" href="style.css">
     <title>Boggle Game</title>
 </head>
-
 <body>
+        
+    <div id="clockdiv">
+        <h1>Countdown Clock</h1>
+    <div>
+        <span class="seconds"></span>
+        <div class="smalltext">Seconds</div>
+    </div>
+    </div>
+
+    <div>
+        <span id="showEnd">Thank you for playing, you attained the score of: </span>
+        <div id="finalScore"> </div>
+    </div>
+
+        </table>
     <div id="boggle-container">
         <!-- <img src="./images/logo.png" class="logo" /> -->
         <div id="board">
 
         </div>
+        <div id="word-submit">
+            <form id="wordSubmit">
+                <span><strong>Enter Word:</strong> <input type="text" id="user_word"> </span>
+                <button type="submit" onClick="validateWord(this.form)">Submit Word</button>
+            </form>
+        </div>
+
+        <div id="current_score">
+            <span id="user_score"><strong>Current Score:</strong> 0</span>
+        </div>
+
+        <table id="score-table">
+            <tr>
+                <th>Submitted Word</th>
+                <th>Score</th>
+            </tr>
+        </table>
     </div>
 </body>
 </html>
