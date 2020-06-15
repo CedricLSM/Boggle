@@ -72,32 +72,32 @@ class Boggle(db.Model):
             self.correct_answer = self.getCorrectAnswer()
 
     def getCorrectAnswer(self): 
-        
-        #form 2D list of the board in word_li
-        tmp_word_li = self.board.split(",")
-        word_li = []
-        tmp = []
-        for i in range(len(tmp_word_li)):
-            if i%4==0 and i!=0:
-                word_li.append(tmp)
-                tmp = []
-            tmp.append(tmp_word_li[i])
-        word_li.append(tmp)
 
-        #get dictionary of all english words
+        #form 2D list of the board
+        tmpWordLi = self.board.split(",")
+        wordLi = []
+        tmp = []
+        for i in range(len(tmpWordLi)):
+            if i%4==0 and i!=0:
+                wordLi.append(tmp)
+                tmp = []
+            tmp.append(tmpWordLi[i])
+        wordLi.append(tmp)
+
+        #get a list of all english words with lengths 3 & 4
         mywords = [i.upper() for i in words.words() if len(i)>=3 and len(i)<=4]
 
         #build a trie for efficient search, using mywords
         trie = self.createTrie(mywords)
 
         #DFS to find all correct answers to match against player's answers
-        m,n = len(word_li),len(word_li[0])
-        final_word_li = []
+        m,n = len(wordLi),len(wordLi[0])
+        finalWordLi = []
         for i in range(m):
             for j in range(n):
-                self.findCorrectAnswer(word_li,i,j,trie,"",final_word_li)
+                self.findCorrectAnswer(wordLi,i,j,trie,"",finalWordLi)
 
-        return ",".join(list(set(final_word_li)))
+        return ",".join(list(set(finalWordLi)))
 
     def createTrie(mywords):
         trie = {}
@@ -110,24 +110,24 @@ class Boggle(db.Model):
             t["#"] = "#"
         return trie
 
-    def findCorrectAnswer(self,word_li,i,j,trie,path,final_word_li):
-        m,n = len(word_li),len(word_li[0])
+    def findCorrectAnswer(self,wordLi,i,j,trie,path,finalWordLi):
+        m,n = len(wordLi),len(wordLi[0])
         if '#' in trie:
-            final_word_li.append(path)
-        if i<0 or i>=m or j<0 or j>=n or word_li[i][j] not in trie:
+            finalWordLi.append(path)
+        if i<0 or i>=m or j<0 or j>=n or wordLi[i][j] not in trie:
             return
-        tmp = word_li[i][j]
-        word_li[i][j] ="@"
-        self.findCorrectAnswer(word_li, i+1, j, trie[tmp], path+tmp, final_word_li)
-        self.findCorrectAnswer(word_li, i, j+1, trie[tmp], path+tmp, final_word_li)
-        self.findCorrectAnswer(word_li, i-1, j, trie[tmp], path+tmp, final_word_li)
-        self.findCorrectAnswer(word_li, i, j-1, trie[tmp], path+tmp, final_word_li)
+        tmp = wordLi[i][j]
+        wordLi[i][j] ="@"
+        self.findCorrectAnswer(wordLi, i+1, j, trie[tmp], path+tmp, finalWordLi)
+        self.findCorrectAnswer(wordLi, i, j+1, trie[tmp], path+tmp, finalWordLi)
+        self.findCorrectAnswer(wordLi, i-1, j, trie[tmp], path+tmp, finalWordLi)
+        self.findCorrectAnswer(wordLi, i, j-1, trie[tmp], path+tmp, finalWordLi)
 
-        self.findCorrectAnswer(word_li, i+1, j+1, trie[tmp], path+tmp, final_word_li)
-        self.findCorrectAnswer(word_li, i+1, j-1, trie[tmp], path+tmp, final_word_li)
-        self.findCorrectAnswer(word_li, i-1, j-1, trie[tmp], path+tmp, final_word_li)
-        self.findCorrectAnswer(word_li, i-1, j+1, trie[tmp], path+tmp, final_word_li)
-        word_li[i][j] = tmp
+        self.findCorrectAnswer(wordLi, i+1, j+1, trie[tmp], path+tmp, finalWordLi)
+        self.findCorrectAnswer(wordLi, i+1, j-1, trie[tmp], path+tmp, finalWordLi)
+        self.findCorrectAnswer(wordLi, i-1, j-1, trie[tmp], path+tmp, finalWordLi)
+        self.findCorrectAnswer(wordLi, i-1, j+1, trie[tmp], path+tmp, finalWordLi)
+        wordLi[i][j] = tmp
 
 
     def makeBoard(self): 
@@ -158,6 +158,30 @@ def getGame(gID):
     if curr_game:
         return jsonify(curr_game.json())
     return jsonify({"message": "Game not found."}), 404
+
+@app.route("/games/find_latest")
+def getLatestGameID():
+    all_games = [boggle.json() for boggle in Boggle.query.all()]
+    return str(all_games[-1]["gID"])
+
+@app.route("/games/<int:gID>", methods=['PUT'])
+def updateWordList(gID):
+    games = Boggle.query.filter_by(gID=gID).first()
+    data = request.get_json(["user_answer"])
+    if data["user_answer"].upper().strip() not in games.user_answer:
+        games.user_answer = games.user_answer+","+data["user_answer"].upper().strip()
+
+    count = 0
+    for crt_guess in games.user_answer.split(","):
+        if crt_guess in games.correct_answer.split(","):
+            count += 1
+    games.user_score = count
+    try:
+        db.session.commit()
+    except:
+        return jsonify({"message": "An error occurred in updating the records."}), 500
+
+    return jsonify({"Boggle": [games.json()]})
 
 @app.route("/games", methods=['POST'])
 def createGame():
