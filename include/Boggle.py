@@ -28,9 +28,9 @@ class Boggle(db.Model):
 
     Methods
     -------
-    get_correct_answer()
+    getCorrectAnswer()
 
-    make_board()
+    makeBoard()
         Returns a 4x4 wordlist in str form
     json()
         Returns the Boggle object in JSON form
