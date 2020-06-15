@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from nltk.corpus import words
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/Boggle'
@@ -71,8 +72,62 @@ class Boggle(db.Model):
             self.correct_answer = self.getCorrectAnswer()
 
     def getCorrectAnswer(self): 
-        #TODO: Write function to create Trie and helper function to traverse the board using DFS to determine all correct answers
-        return ""
+        
+        #form 2D list of the board in word_li
+        tmp_word_li = self.board.split(",")
+        word_li = []
+        tmp = []
+        for i in range(len(tmp_word_li)):
+            if i%4==0 and i!=0:
+                word_li.append(tmp)
+                tmp = []
+            tmp.append(tmp_word_li[i])
+        word_li.append(tmp)
+
+        #get dictionary of all english words
+        mywords = [i.upper() for i in words.words() if len(i)>=3 and len(i)<=4]
+
+        #build a trie for efficient search, using mywords
+        trie = self.createTrie(mywords)
+
+        #DFS to find all correct answers to match against player's answers
+        m,n = len(word_li),len(word_li[0])
+        final_word_li = []
+        for i in range(m):
+            for j in range(n):
+                self.findCorrectAnswer(word_li,i,j,trie,"",final_word_li)
+
+        return ",".join(list(set(final_word_li)))
+
+    def createTrie(mywords):
+        trie = {}
+        for w in mywords:
+            t = trie
+            for c in w:
+                if c not in t:
+                    t[c] = {}
+                t = t[c]
+            t["#"] = "#"
+        return trie
+
+    def findCorrectAnswer(self,word_li,i,j,trie,path,final_word_li):
+        m,n = len(word_li),len(word_li[0])
+        if '#' in trie:
+            final_word_li.append(path)
+        if i<0 or i>=m or j<0 or j>=n or word_li[i][j] not in trie:
+            return
+        tmp = word_li[i][j]
+        word_li[i][j] ="@"
+        self.findCorrectAnswer(word_li, i+1, j, trie[tmp], path+tmp, final_word_li)
+        self.findCorrectAnswer(word_li, i, j+1, trie[tmp], path+tmp, final_word_li)
+        self.findCorrectAnswer(word_li, i-1, j, trie[tmp], path+tmp, final_word_li)
+        self.findCorrectAnswer(word_li, i, j-1, trie[tmp], path+tmp, final_word_li)
+
+        self.findCorrectAnswer(word_li, i+1, j+1, trie[tmp], path+tmp, final_word_li)
+        self.findCorrectAnswer(word_li, i+1, j-1, trie[tmp], path+tmp, final_word_li)
+        self.findCorrectAnswer(word_li, i-1, j-1, trie[tmp], path+tmp, final_word_li)
+        self.findCorrectAnswer(word_li, i-1, j+1, trie[tmp], path+tmp, final_word_li)
+        word_li[i][j] = tmp
 
 
     def makeBoard(self): 
