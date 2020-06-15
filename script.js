@@ -78,6 +78,31 @@ async function displayTable() {
     }
 }
 
+async function validateWord(form) {
+    event.preventDefault();
+    try {
+        serviceURL = await getData("http://127.0.0.1:7000/games/find_latest");
+        var message = document.getElementById("user_word").value;
+        var requestBody = {
+        user_answer:message
+        };
+
+        var requestParam = {
+            method: 'PUT', 
+            headers: { "Content-Type": "application/json" }, 
+            mode: 'cors',
+            body: JSON.stringify(requestBody)
+        }
+        const response = await fetch(serviceURL, requestParam);
+        const data = await response.json();
+        user_score.innerHTML = "<strong> Current Score: </strong>"+ data['Boggle'][0].user_score;
+        updateScoretable();
+        document.getElementById("user_word").value = "";
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 var serviceURL = "http://127.0.0.1:7000/games";
 postData(serviceURL);
 displayTable();
