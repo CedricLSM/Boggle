@@ -154,7 +154,34 @@ var serviceURL = "http://127.0.0.1:7000/games";
 postData(serviceURL);
 displayTable();
 
-var serviceURL = "http://127.0.0.1:7000/games";
-postData(serviceURL);
-displayTable();
+function getTimeRemaining(endtime) {
+    const total = Date.parse(endtime) - Date.parse(new Date());
+    const seconds = Math.floor((total / 1000) % 60);  
+    return {
+        seconds
+    };
+}
+
+function initializeClock(id, endtime) {
+    const clock = document.getElementById(id);
+    const secondsSpan = clock.querySelector('.seconds');
+
+    function updateClock() {
+        const t = getTimeRemaining(endtime);
+        secondsSpan.innerHTML = ('0' + t.seconds).slice(-2);
+        console.log(t.seconds);
+        // console.log(secondsSpan);
+        if (t.seconds == 0) {
+            clearInterval(timeinterval);
+            $("#boggle-container").hide();
+            $("#clockdiv").hide();
+            displayEndResult();
+        }
+    }
+    updateClock();
+    const timeinterval = setInterval(updateClock, 1000);
+}
+
+const deadline = new Date(Date.parse(new Date()) + 10 * 1000);
+initializeClock('clockdiv', deadline);
 
