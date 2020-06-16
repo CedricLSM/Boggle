@@ -103,6 +103,35 @@ async function validateWord(form) {
     }
 }
 
+async function updateScoretable() {
+    try {
+        serviceURL = await getData("http://127.0.0.1:7000/games/find_latest");
+        const response =
+            await fetch(serviceURL, {method: 'GET', mode: 'cors' });
+        const data = await response.json();
+        const user_answers = data.user_answer.split(",");
+        const correct_answers = data.correct_answer.split(",");
+        var rows = "";
+        console.log(user_answers);
+        rows +=   "<tr><th>Submitted Word</th><th>Score</th></tr>";
+        for (i = 1; i < user_answers.length; i++) {
+            eachRow = 
+            "<tr>" +
+            "<td>" +user_answers[i] + "</td>";
+            if (correct_answers.includes(user_answers[i])){
+                eachRow += "<td>" + 1 + "</td>";
+            } else {
+                eachRow += "<td>" + 0 + "</td>";
+            }
+            eachRow += "</tr>";
+            rows += eachRow;
+        }
+        $('#score-table').html(rows);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 var serviceURL = "http://127.0.0.1:7000/games";
 postData(serviceURL);
 displayTable();
