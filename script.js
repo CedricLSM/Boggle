@@ -132,6 +132,28 @@ async function updateScoretable() {
     }
 }
 
+async function displayEndResult() {
+    $("#showEnd").show();
+    try {
+        serviceURL = await getData("http://127.0.0.1:7000/games/find_latest");
+        const response = await fetch(serviceURL, {method: 'GET', mode: 'cors' });
+        const data = await response.json();
+        console.log(data["user_score"]);
+        $("#finalScore").html(data["user_score"]);
+
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+$(document).ready(function() {
+    $('#showEnd').hide();
+});
+
+var serviceURL = "http://127.0.0.1:7000/games";
+postData(serviceURL);
+displayTable();
+
 var serviceURL = "http://127.0.0.1:7000/games";
 postData(serviceURL);
 displayTable();
