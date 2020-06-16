@@ -99,7 +99,7 @@ class Boggle(db.Model):
 
         return ",".join(list(set(finalWordLi)))
 
-    def createTrie(mywords):
+    def createTrie(self,mywords):
         trie = {}
         for w in mywords:
             t = trie
